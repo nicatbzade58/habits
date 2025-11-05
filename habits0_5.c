@@ -56,7 +56,7 @@ int main() {
             printf("\033[1;34mExiting habits, good day!\033[0m\n");
             return 0;
         } else if (strncmp(cmd, "help", (size_t)4) == 0) {
-            printf("\033[0;36mCommands list for tododaily version 0.05:\033[0m\n");
+            printf("\033[0;36mCommands list for habits version 0.05:\033[0m\n");
             printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
             printf("\033[1;33mlist-activities: \033[0mList all activities in the register which can be added to today's list.\n");
             printf("Note: For now all activities are automatically added to today's list.\n");
@@ -120,9 +120,9 @@ void summarize_activities() {
         if (tags_base[x].instances < 2) {
             printf("\033[1;34m[%s]x%d] ", tags_base[x].name, tags_base[x].instances);
         } else if (tags_base[x].instances == 2) {
-            printf("\033[1;33m[%s]x%d] ", tags_base[x].name, tags_base[x].instances);
-        } else {
             printf("\033[1;35m[%s]x%d] ", tags_base[x].name, tags_base[x].instances);
+        } else {
+            printf("\033[1;33m[%s]x%d] ", tags_base[x].name, tags_base[x].instances);
         }
     }
     printf("\033[0m\n");
