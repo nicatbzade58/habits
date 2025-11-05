@@ -11,3 +11,9 @@ Note: For now all activities are automatically added to today's list.
 **summarize:** List all activities done today and count the tags.
 
 **help:** Display all possible commands.
+
+### to-do:
+
+**v0.6:** Add file write/read
+
+**v0.7:** Optimize for multiple sessions
