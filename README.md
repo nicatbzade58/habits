@@ -28,3 +28,7 @@ Note: For now all activities are automatically added to today's list.
 ### to-do:
 
 **v0.7:** Optimize for multiple sessions: Add delete and edit functions.
+
+**v0.8:** Optimize for multiple sessions: Divide today's activities from habits register.
+
+**v0.9:** Save last week's daily activities and add summarize-week function.
