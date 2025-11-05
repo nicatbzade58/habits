@@ -20,6 +20,8 @@ void summarize_activities();
 void list_activities();
 void generate_taglist();
 int compare_with_base(char tag[10]);
+void save_to_file();
+void read_from_file();
 
 static activity activities[MAX_ACTIVITIES];
 static int activity_count = 0;
@@ -27,7 +29,17 @@ static tag tags_base[MAX_TAGS];
 static int all_tag_count = 0;
 
 int main() {
-    printf("\033[1;34mWelcome to the habits version 0.5!\033[0m\n");
+    printf("\033[1;34mWelcome to the habits version 0.6!\033[0m\n");
+    printf("[DEBUG] Attempting to find save file...\n");
+    FILE *rptr;
+    rptr = fopen("habits.hbts", "r");
+    if(rptr == NULL) {
+        printf("\033[31mDidn't find a save file. If you didn't want to start from scratch, please check your current directory.\033[0m\n");
+    } else {
+        printf("\033[32mFound the save file, loading...\033[0m\n");
+        read_from_file();
+    }
+
     while(true) {
 
         char cmd[20];
@@ -56,14 +68,17 @@ int main() {
             printf("\033[1;34mExiting habits, good day!\033[0m\n");
             return 0;
         } else if (strncmp(cmd, "help", (size_t)4) == 0) {
-            printf("\033[0;36mCommands list for habits version 0.05:\033[0m\n");
+            printf("\033[0;36mCommands list for habits version 0.06:\033[0m\n");
             printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
             printf("\033[1;33mlist-activities: \033[0mList all activities in the register which can be added to today's list.\n");
             printf("Note: For now all activities are automatically added to today's list.\n");
             printf("\033[1;33msummarize: \033[0mList all activities done today and count the tags.\n");
+            printf("\033[1;33msave: \033[0mSave current list to a file in the current directory.\n");
             printf("\033[1;33mhelp: \033[0mDisplay all possible commands.\n");
         } else if (strncmp(cmd, "summarize", (size_t)9) == 0) {
             summarize_activities();
+        } else if (strncmp(cmd, "save", (size_t)4) == 0) {
+            save_to_file();
         } else {
             printf("Unknown command: %s\n", cmd);
         }
@@ -158,4 +173,67 @@ int compare_with_base(char tag[10]) {
     }
 
     return 1;
+}
+
+void save_to_file() {
+    printf("[DEBUG] Saving to file...\n");
+    FILE *fptr;
+    fptr = fopen("habits.hbts", "w");
+
+    if (fptr == NULL) {
+        printf("Error opening file!\n");
+    }
+
+    fprintf(fptr, "# Habits save file made with version 0.6\n");
+    fprintf(fptr, "# Feel free to change it directly here\n");
+    fprintf(fptr, "# Make sure not to disturb the structure though :D\n");
+    fprintf(fptr, "\n");
+
+    int i;
+    for (i = 0; i < activity_count; i++) {
+        fprintf(fptr, "%s\n%s %s %s %s %s\n", activities[i].name, activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4], activities[i].tags[5]);
+
+        printf("[DEBUG] Printing %s %s %s %s %s %s to the file...\n", activities[i].name, activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4], activities[i].tags[5]);
+
+        fprintf(fptr, "\n");
+    }
+
+    printf("\033[0;32mSuccesfully saved to a habits.hbts file on current directory.\033[0m\n");
+    fclose(fptr);
+}
+
+void read_from_file(){
+    printf("[DEBUG] Attempting to read from file...\n");
+    FILE *fptr;
+    fptr = fopen("habits.hbts", "r");
+    char readLine[100];
+    int i;
+    int x = 0;
+
+    while (fgets(readLine, 100, fptr)) {
+        printf("[DEBUG] Now reading line #%d\n", i);
+        char readName[20];
+        char readTags[55];
+
+        if (i > 3) {
+            if (x == 0) {
+                printf("[DEBUG] Line %d is probably an activity name.\n", i);
+                readLine[strcspn(readLine, "\n\r")] = 0;
+                strcpy(readName, readLine);
+                printf("[DEBUG] readName is now %s.\n", readName);
+                x = 1;
+            } else if (x == 1){
+                printf("[DEBUG] Line %d is probably a string of tags.\n", i);
+                readLine[strcspn(readLine, "\n\r")] = 0;
+                strcpy(readTags, readLine);
+                x = 2;
+            } else if (x == 2){
+                printf("[DEBUG] Line %d is probably a spacer.\n", i);
+                add_activity(readName, readTags);
+                x = 0;
+            }
+        }
+
+        i +=1;
+    }
 }
