@@ -56,11 +56,12 @@ int main() {
             printf("\033[1;34mExiting tododaily, good day!\033[0m\n");
             return 0;
         } else if (strncmp(cmd, "help", (size_t)4) == 0) {
-            printf("Commands list for tododaily version 0.02:\n");
-            printf("new-activity: Add a new activity to the register.\n");
-            printf("list-activities: List all activities in the register which can be added to today's list.\n");
+            printf("\033[0;36mCommands list for tododaily version 0.05:\033[0m\n");
+            printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
+            printf("\033[1;33mlist-activities: \033[0mList all activities in the register which can be added to today's list.\n");
             printf("Note: For now all activities are automatically added to today's list.\n");
-            printf("help: You just used it.\n");
+            printf("\033[1;33msummarize: \033[0mList all activities done today and count the tags.\n");
+            printf("\033[1;33mhelp: \033[0mDisplay all possible commands.\n");
         } else if (strncmp(cmd, "summarize", (size_t)9) == 0) {
             summarize_activities();
         } else {
