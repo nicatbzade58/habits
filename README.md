@@ -1,4 +1,4 @@
-# habits
+# habits v0.5
 ## A CLI habit tracker / day planner
 ### commands:
 
