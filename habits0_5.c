@@ -27,7 +27,7 @@ static tag tags_base[MAX_TAGS];
 static int all_tag_count = 0;
 
 int main() {
-    printf("\033[1;34mWelcome to the tododaily version 0.5!\033[0m\n");
+    printf("\033[1;34mWelcome to the habits version 0.5!\033[0m\n");
     while(true) {
 
         char cmd[20];
@@ -53,7 +53,7 @@ int main() {
         } else if (strncmp(cmd, "list-activities", (size_t)15) == 0) {
             list_activities();
         } else if (strncmp(cmd, "exit", (size_t)4) == 0) {
-            printf("\033[1;34mExiting tododaily, good day!\033[0m\n");
+            printf("\033[1;34mExiting habits, good day!\033[0m\n");
             return 0;
         } else if (strncmp(cmd, "help", (size_t)4) == 0) {
             printf("\033[0;36mCommands list for tododaily version 0.05:\033[0m\n");
