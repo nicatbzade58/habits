@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define MAX_ACTIVITIES 100
 #define MAX_TAGS 500
@@ -15,13 +16,14 @@ typedef struct {
     int instances;
 } tag;
 
-void add_activity(char name[20], char tags[55]);
+void add_activity(char name[21], char tags[55]);
 void summarize_activities();
 void list_activities();
 void generate_taglist();
 int compare_with_base(char tag[10]);
 void save_to_file();
 void read_from_file();
+void delete_activity(int id);
 
 static activity activities[MAX_ACTIVITIES];
 static int activity_count = 0;
@@ -43,8 +45,10 @@ int main() {
     while(true) {
 
         char cmd[20];
-        char name[20];
+        char name[21];
         char tags[55];
+        char buffer[10];
+        int id = 1000;
 
         printf("\033[1;33mcmd> \033[0m");
 
@@ -55,19 +59,47 @@ int main() {
             printf("\033[0;36mAdding new activity...\033[0m\n");
             printf("\033[0;36mEnter activity properties:\033[0m\n");
             printf("\033[1;33mname: \033[1;37m");
-            fgets(name, sizeof(name), stdin);
-            name[strcspn(name, "\n")] = '\0';
+//fgets(name, sizeof(name), stdin);
+//name[strcspn(name, "\n")] = '\0';
+            if (fgets(name, sizeof(name), stdin)) {
+                if (strchr(name, '\n') == NULL) {
+                    int c;
+                    while ((c = getchar()) != '\n' && c != EOF);
+                }
+                name[strcspn(name, "\n")] = '\0';
+            }
             printf("\033[1;33mtags: \033[1;37m");
-            fgets(tags, sizeof(tags), stdin);
-            tags[strcspn(tags, "\n")] = '\0';
+//fgets(tags, sizeof(tags), stdin);
+//tags[strcspn(tags, "\n")] = '\0';
+            if (fgets(tags, sizeof(tags), stdin)) {
+                if (strchr(tags, '\n') == NULL) {
+                    int c;
+                    while ((c = getchar()) != '\n' && c != EOF);
+                }
+                tags[strcspn(tags, "\n")] = '\0';
+            }
             printf("\033[0m[DEBUG] Trying to add activity \"%s\" with tags: %s...\n", name, tags);
             add_activity(name, tags);
+
         } else if (strncmp(cmd, "list-activities", (size_t)15) == 0) {
             list_activities();
+
         } else if (strncmp(cmd, "exit", (size_t)4) == 0) {
             printf("\033[1;34mExiting habits, good day!\033[0m\n");
             return 0;
-        } else if (strncmp(cmd, "help", (size_t)4) == 0) {
+
+        } else if (strncmp(cmd, "remove-activity", (size_t)15) == 0) {
+            printf("\033[0;36mEnter activity ID to remove: \033[0m");
+            if (fgets(buffer, sizeof(buffer), stdin)) {
+                tags[strcspn(buffer, "\n")] = '\0';
+                if (sscanf(buffer, "%d", &id) == 1){
+                    delete_activity(id);
+                } else {
+                    printf("Invalid integer.\n");
+                }
+            }
+
+        }  else if (strncmp(cmd, "help", (size_t)4) == 0) {
             printf("\033[0;36mCommands list for habits version 0.06:\033[0m\n");
             printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
             printf("\033[1;33mlist-activities: \033[0mList all activities in the register which can be added to today's list.\n");
@@ -75,17 +107,20 @@ int main() {
             printf("\033[1;33msummarize: \033[0mList all activities done today and count the tags.\n");
             printf("\033[1;33msave: \033[0mSave current list to a file in the current directory.\n");
             printf("\033[1;33mhelp: \033[0mDisplay all possible commands.\n");
+
         } else if (strncmp(cmd, "summarize", (size_t)9) == 0) {
             summarize_activities();
+
         } else if (strncmp(cmd, "save", (size_t)4) == 0) {
             save_to_file();
+
         } else {
             printf("Unknown command: %s\n", cmd);
         }
     }
 }
 
-void add_activity(char name[20], char tags[55]) {
+void add_activity(char name[21], char tags[55]) {
     strcpy(activities[activity_count].name, name);
     activities[activity_count].tag_count = 0;
     int count = 0;
@@ -191,9 +226,9 @@ void save_to_file() {
 
     int i;
     for (i = 0; i < activity_count; i++) {
-        fprintf(fptr, "%s\n%s %s %s %s %s\n", activities[i].name, activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4], activities[i].tags[5]);
+        fprintf(fptr, "%s\n%s %s %s %s %s\n", activities[i].name, activities[i].tags[0], activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4]);
 
-        printf("[DEBUG] Printing %s %s %s %s %s %s to the file...\n", activities[i].name, activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4], activities[i].tags[5]);
+        printf("[DEBUG] Printing %s %s %s %s %s %s to the file...\n", activities[i].name, activities[i].tags[0], activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4]);
 
         fprintf(fptr, "\n");
     }
@@ -207,12 +242,12 @@ void read_from_file(){
     FILE *fptr;
     fptr = fopen("habits.hbts", "r");
     char readLine[100];
-    int i;
+    int i = 0;
     int x = 0;
 
     while (fgets(readLine, 100, fptr)) {
         printf("[DEBUG] Now reading line #%d\n", i);
-        char readName[20];
+        char readName[21];
         char readTags[55];
 
         if (i > 3) {
@@ -235,5 +270,35 @@ void read_from_file(){
         }
 
         i +=1;
+    }
+}
+
+void delete_activity(int id){
+    int x = id - 1;
+    char answer;
+    int c;
+    printf("Deleting the activity %s...\n", activities[x].name);
+    printf("Please confirm (y/n): ");
+    answer = getchar();
+    while ((c = getchar()) != '\n' && c != EOF);
+    if (answer == 'y' || answer == 'Y') {
+        printf("Proceeding with deletion...\n");
+        for (int i = x; i < activity_count - 1; i++) {
+            printf("[DEBUG] Copying %s to %s...\n",activities[i+1].name, activities[i].name);
+            activities[i] = activities[i + 1];
+        }
+        activity_count--;
+        printf("Activity removed.\n");
+        printf("Please save and restart the program for summarize function to work, sorry for inconvenience...\n");
+/*        printf("[DEBUG] Resetting the activity properties...\n");
+        activities[x].name[0] = '\0';
+        for (int i = 0; i < 5; i++) {
+            activities[x].tags[i][0] = '\0';
+        }
+        printf("[DEBUG] Activity properties reset.\n");
+        printf("[DEBUG] Shifting other activities...\n"); */
+    }
+    if (answer == 'n' || answer == 'N') {
+        printf("No changes were made.\n");
     }
 }
