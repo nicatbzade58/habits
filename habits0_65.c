@@ -89,6 +89,7 @@ int main() {
             return 0;
 
         } else if (strncmp(cmd, "remove-activity", (size_t)15) == 0) {
+            list_activities();
             printf("\033[0;36mEnter activity ID to remove: \033[0m");
             if (fgets(buffer, sizeof(buffer), stdin)) {
                 tags[strcspn(buffer, "\n")] = '\0';
@@ -102,6 +103,7 @@ int main() {
         }  else if (strncmp(cmd, "help", (size_t)4) == 0) {
             printf("\033[0;36mCommands list for habits version 0.06:\033[0m\n");
             printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
+            printf("\033[1;33mremove-activity: \033[0mRemove an activity from the register.\n");
             printf("\033[1;33mlist-activities: \033[0mList all activities in the register which can be added to today's list.\n");
             printf("Note: For now all activities are automatically added to today's list.\n");
             printf("\033[1;33msummarize: \033[0mList all activities done today and count the tags.\n");
