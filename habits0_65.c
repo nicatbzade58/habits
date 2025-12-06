@@ -85,8 +85,16 @@ int main() {
             list_activities();
 
         } else if (strncmp(cmd, "exit", (size_t)4) == 0) {
-            printf("\033[1;34mExiting habits, good day!\033[0m\n");
-            return 0;
+
+            char answer;
+            int c;
+            printf("Don't forget to save. Please confirm exit (y/n): ");
+            answer = getchar();
+            while ((c = getchar()) != '\n' && c != EOF);
+            if (answer == 'y' || answer == 'Y') {
+                printf("\033[1;34mExiting habits, good day!\033[0m\n");
+                return 0;
+            }
 
         } else if (strncmp(cmd, "remove-activity", (size_t)15) == 0) {
             list_activities();
@@ -276,21 +284,28 @@ void read_from_file(){
 }
 
 void delete_activity(int id){
+
+    if (id < 1 || id > activity_count) {
+        printf("Invalid activity ID.\n");
+        return;
+    }
+
     int x = id - 1;
     char answer;
     int c;
-    printf("Deleting the activity %s...\n", activities[x].name);
+    printf("\033[31mDeleting the activity %s...\033[0m\n", activities[x].name);
     printf("Please confirm (y/n): ");
     answer = getchar();
     while ((c = getchar()) != '\n' && c != EOF);
+
     if (answer == 'y' || answer == 'Y') {
-        printf("Proceeding with deletion...\n");
+        printf("[DEBUG] Proceeding with deletion...\n");
         for (int i = x; i < activity_count - 1; i++) {
             printf("[DEBUG] Copying %s to %s...\n",activities[i+1].name, activities[i].name);
             activities[i] = activities[i + 1];
         }
         activity_count--;
-        printf("Activity removed.\n");
+        printf("\033[0;32mActivity removed.\033[0m\n");
         printf("Please save and restart the program for summarize function to work, sorry for inconvenience...\n");
 /*        printf("[DEBUG] Resetting the activity properties...\n");
         activities[x].name[0] = '\0';
