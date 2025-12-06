@@ -8,9 +8,7 @@ This is a minimalistic CLI app that aims to be able to:
 4. Set habit goals, and remind them at each use.
 5. Set tag goals and promote activities with those tags.
 
-For now you can add activities with "new-activity" and enter tags, and summarize everything in the end.
-
-You can save, but I don't recommend it for now. I have to optimize it for multi-session use first.
+For now you can manage a library of activities, summarize and save them.
 
 ### commands:
 
