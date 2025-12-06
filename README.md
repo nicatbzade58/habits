@@ -1,4 +1,4 @@
-# habits v0.6
+# habits v0.65
 ## A CLI habit tracker / day planner
 
 This is a minimalistic CLI app that aims to be able to:
@@ -21,6 +21,8 @@ You can save, but I don't recommend it for now. I have to optimize it for multi-
 Note: For now all activities are automatically added to today's list.
 
 **summarize:** List all activities done today and count the tags.
+
+**remove-activity:** Delete an activity from the register.
 
 **save:** Save current list to a file in the current directory.
 
