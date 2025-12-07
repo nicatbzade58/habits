@@ -24,6 +24,7 @@ int compare_with_base(char tag[10]);
 void save_to_file();
 void read_from_file();
 void delete_activity(int id);
+void edit_activity(int id);
 
 static activity activities[MAX_ACTIVITIES];
 static int activity_count = 0;
@@ -108,10 +109,23 @@ int main() {
                 }
             }
 
+        } else if (strncmp(cmd, "edit-activity", (size_t)13) == 0) {
+            list_activities();
+            printf("\033[0;36mEnter activity ID to edit: \033[0m");
+            if (fgets(buffer, sizeof(buffer), stdin)) {
+                tags[strcspn(buffer, "\n")] = '\0';
+                if (sscanf(buffer, "%d", &id) == 1){
+                    edit_activity(id);
+                } else {
+                    printf("Invalid integer.\n");
+                }
+            }
+
         }  else if (strncmp(cmd, "help", (size_t)4) == 0) {
             printf("\033[0;36mCommands list for habits version 0.06:\033[0m\n");
             printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
             printf("\033[1;33mremove-activity: \033[0mRemove an activity from the register.\n");
+            printf("\033[1;33medit-activity: \033[0mEdit an activity in the register.\n");
             printf("\033[1;33mlist-activities: \033[0mList all activities in the register which can be added to today's list.\n");
             printf("Note: For now all activities are automatically added to today's list.\n");
             printf("\033[1;33msummarize: \033[0mList all activities done today and count the tags.\n");
@@ -318,4 +332,68 @@ void delete_activity(int id){
     if (answer == 'n' || answer == 'N') {
         printf("No changes were made.\n");
     }
+}
+
+void edit_activity(int id){
+
+    if (id < 1 || id > activity_count) {
+        printf("Invalid activity ID.\n");
+        return;
+    }
+
+    int x = id - 1;
+    char newName[21];
+    char newTags[55];
+
+    printf("\033[33mEditing the activity %s...\033[0m\n", activities[x].name);
+
+    printf("\033[0;36mEnter activity properties:\033[0m\n");
+    printf("\033[1;33mnew name: \033[1;37m");
+
+    if (fgets(newName, sizeof(newName), stdin)) {
+        if (strchr(newName, '\n') == NULL) {
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+        }
+        newName[strcspn(newName, "\n")] = '\0';
+    }
+    printf("\033[1;33mnew tags: \033[1;37m");
+
+    if (fgets(newTags, sizeof(newTags), stdin)) {
+        if (strchr(newTags, '\n') == NULL) {
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+        }
+        newTags[strcspn(newTags, "\n")] = '\0';
+    }
+
+    printf("\033[0m");
+    printf("[DEBUG] Trying to edit activity %s\n", activities[x].name);
+    printf("[DEBUG] New properties: %s with tags %s\n", newName, newTags);
+    printf("[DEBUG] Recreating the entry...\n");
+
+    strcpy(activities[x].name, newName);
+    printf("[DEBUG] Activity ID %d name: %s\n", x + 1, activities[x].name);
+
+    activities[x].tag_count = 0;
+    int count = 0;
+    char *token;
+    token = strtok(newTags, " ");
+    while (token != NULL) {
+        strcpy(activities[x].tags[activities[x].tag_count], token);
+        int is_unique = compare_with_base(activities[x].tags[activities[x].tag_count]);
+        //        printf("%d\n",is_unique);
+        if (is_unique == 1) {
+            strcpy(tags_base[all_tag_count].name, token);
+            tags_base[all_tag_count].instances = 1;
+            printf("[DEBUG] Added a new tag named %s.\n", tags_base[all_tag_count].name);
+            all_tag_count +=1;
+        } else if (is_unique == 0) {
+            printf("[DEBUG] %s is not unique.\n", token);
+        }
+        token = strtok(NULL, " ");
+        activities[x].tag_count += 1;
+    }
+    printf("\033[0;32mThe activity \033[1;32m<%s>\033[0;32m was added.\033[0m\n", activities[x].name);
+    printf("Please save and restart the program for summarize function to work, sorry for inconvenience...\n");
 }
