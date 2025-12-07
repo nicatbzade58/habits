@@ -22,11 +22,13 @@ Note: For now all activities are automatically added to today's list.
 
 **remove-activity:** Delete an activity from the register.
 
+**edit-activity:** Edit an activity in the register.
+
 **save:** Save current list to a file in the current directory.
 
 **help:** Display all possible commands.
 
-### to-do:
+### Roadmap:
 
 **v0.7:** Optimize for multiple sessions: Add delete and edit functions.
 
