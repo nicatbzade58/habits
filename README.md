@@ -1,4 +1,4 @@
-# habits v0.65
+# habits v0.7
 ## A CLI habit tracker / day planner
 
 This is a minimalistic CLI app that aims to be able to:
