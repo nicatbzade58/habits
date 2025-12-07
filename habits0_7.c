@@ -32,7 +32,7 @@ static tag tags_base[MAX_TAGS];
 static int all_tag_count = 0;
 
 int main() {
-    printf("\033[1;34mWelcome to the habits version 0.6!\033[0m\n");
+    printf("\033[1;34mWelcome to the habits version 0.7!\033[0m\n");
     printf("[DEBUG] Attempting to find save file...\n");
     FILE *rptr;
     rptr = fopen("habits.hbts", "r");
@@ -122,7 +122,7 @@ int main() {
             }
 
         }  else if (strncmp(cmd, "help", (size_t)4) == 0) {
-            printf("\033[0;36mCommands list for habits version 0.06:\033[0m\n");
+            printf("\033[0;36mCommands list for habits version 0.7:\033[0m\n");
             printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
             printf("\033[1;33mremove-activity: \033[0mRemove an activity from the register.\n");
             printf("\033[1;33medit-activity: \033[0mEdit an activity in the register.\n");
