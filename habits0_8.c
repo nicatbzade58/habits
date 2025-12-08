@@ -5,16 +5,30 @@
 #define MAX_ACTIVITIES 100
 #define MAX_TAGS 500
 
+static int debug = 0;
+
 typedef struct {
-    char name[20];
-    char tags[5][10];
+    char name[21];
+    char tags[5][11];
     int tag_count;
 } activity;
 
 typedef struct {
-    char name[10];
+    char name[11];
     int instances;
 } tag;
+
+typedef struct {
+    int id;
+    int duration;
+} done;
+
+typedef struct {
+    char name[11];
+    int num;
+    int duration;
+    int instances;
+} today_tag;
 
 void add_activity(char name[21], char tags[55]);
 void summarize_activities();
@@ -25,19 +39,25 @@ void save_to_file();
 void read_from_file();
 void delete_activity(int id);
 void edit_activity(int id);
+void today_done(int id, int duration);
 
 static activity activities[MAX_ACTIVITIES];
 static int activity_count = 0;
 static tag tags_base[MAX_TAGS];
 static int all_tag_count = 0;
+static done today_done_act[MAX_ACTIVITIES];
+static int all_today_done;
+static today_tag todays_tags[MAX_TAGS];
+static int all_todays_tags;
 
 int main() {
-    printf("\033[1;34mWelcome to the habits version 0.7!\033[0m\n");
-    printf("[DEBUG] Attempting to find save file...\n");
+    printf("\033[1;34mWelcome to the habits version 0.8!\033[0m\n");
+    if (debug == 1) {printf("[DEBUG] Attempting to find save file...\n");}
     FILE *rptr;
     rptr = fopen("habits.hbts", "r");
     if(rptr == NULL) {
-        printf("\033[31mDidn't find a save file. If you didn't want to start from scratch, please check your current directory.\033[0m\n");
+        printf("\033[31mDidn't find a save file. Please check your current directory.\033[0m\n");
+        printf("\033[31mIgnore this if you want to start a new file.\033[0m\n");
     } else {
         printf("\033[32mFound the save file, loading...\033[0m\n");
         read_from_file();
@@ -79,7 +99,7 @@ int main() {
                 }
                 tags[strcspn(tags, "\n")] = '\0';
             }
-            printf("\033[0m[DEBUG] Trying to add activity \"%s\" with tags: %s...\n", name, tags);
+            if (debug == 1) {printf("\033[0m[DEBUG] Trying to add activity \"%s\" with tags: %s...\n", name, tags);}
             add_activity(name, tags);
 
         } else if (strncmp(cmd, "list-activities", (size_t)15) == 0) {
@@ -93,7 +113,7 @@ int main() {
             answer = getchar();
             while ((c = getchar()) != '\n' && c != EOF);
             if (answer == 'y' || answer == 'Y') {
-                printf("\033[1;34mExiting habits, good day!\033[0m\n");
+                printf("\033[1;34mExiting habits, have a good day!\033[0m\n");
                 return 0;
             }
 
@@ -101,9 +121,35 @@ int main() {
             list_activities();
             printf("\033[0;36mEnter activity ID to remove: \033[0m");
             if (fgets(buffer, sizeof(buffer), stdin)) {
-                tags[strcspn(buffer, "\n")] = '\0';
+                buffer[strcspn(buffer, "\n")] = '\0';
                 if (sscanf(buffer, "%d", &id) == 1){
                     delete_activity(id);
+                } else {
+                    printf("Invalid integer.\n");
+                }
+            }
+
+        } else if (strncmp(cmd, "today-done", (size_t)15) == 0) {
+            list_activities();
+            int duration = 0;
+            printf("\033[0;36mEnter activity ID that you did: \033[0m");
+            if (fgets(buffer, sizeof(buffer), stdin)) {
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (sscanf(buffer, "%d", &id) == 1){
+                    if (id < 1 || id > activity_count) {
+                        printf("Invalid activity ID.\n");
+                    } else {
+                        if (debug == 1) {printf("[DEBUG] id is now %d.\n", id);}
+                        printf("\033[0;36mEnter duration of the activity: \033[0m");
+                        if (fgets(buffer, sizeof(buffer), stdin)) {
+                            buffer[strcspn(buffer, "\n")] = '\0';
+                            if (sscanf(buffer, "%d", &duration) == 1){
+                                today_done(id, duration);
+                            } else {
+                                printf("Invalid integer.\n");
+                            }
+                        }
+                    }
                 } else {
                     printf("Invalid integer.\n");
                 }
@@ -122,21 +168,32 @@ int main() {
             }
 
         }  else if (strncmp(cmd, "help", (size_t)4) == 0) {
-            printf("\033[0;36mCommands list for habits version 0.7:\033[0m\n");
+            printf("\033[0;36mCommands list for habits version 0.8:\033[0m\n");
             printf("\033[1;33mnew-activity: \033[0mAdd a new activity to the register.\n");
             printf("\033[1;33mremove-activity: \033[0mRemove an activity from the register.\n");
             printf("\033[1;33medit-activity: \033[0mEdit an activity in the register.\n");
             printf("\033[1;33mlist-activities: \033[0mList all activities in the register which can be added to today's list.\n");
-            printf("Note: For now all activities are automatically added to today's list.\n");
+            printf("\033[1;33mtoday-done: \033[0mAdd an activity to today's list or increase its time.\n");
             printf("\033[1;33msummarize: \033[0mList all activities done today and count the tags.\n");
             printf("\033[1;33msave: \033[0mSave current list to a file in the current directory.\n");
+            printf("\033[31mNote: Only saves the library entries for now\033[0m\n");
             printf("\033[1;33mhelp: \033[0mDisplay all possible commands.\n");
+            printf("\033[1;33mdebug: \033[0mToggle debug mode.\n");
 
         } else if (strncmp(cmd, "summarize", (size_t)9) == 0) {
             summarize_activities();
 
         } else if (strncmp(cmd, "save", (size_t)4) == 0) {
             save_to_file();
+
+        } else if (strncmp(cmd, "debug", (size_t)5) == 0) {
+            if (debug == 0) {
+                debug = 1;
+                printf("Debugging mode in now active.\n");
+            } else if (debug == 1) {
+                debug = 0;
+                printf("Debugging mode is now turned off.\n");
+            }
 
         } else {
             printf("Unknown command: %s\n", cmd);
@@ -157,10 +214,10 @@ void add_activity(char name[21], char tags[55]) {
         if (is_unique == 1) {
             strcpy(tags_base[all_tag_count].name, token);
             tags_base[all_tag_count].instances = 1;
-            printf("[DEBUG] Added a new tag named %s.\n", tags_base[all_tag_count].name);
+            if (debug == 1) {printf("[DEBUG] Added a new tag named %s.\n", tags_base[all_tag_count].name);}
             all_tag_count +=1;
         } else if (is_unique == 0) {
-            printf("[DEBUG] %s is not unique.\n", token);
+            if (debug == 1) {printf("[DEBUG] %s is not unique.\n", token);}
         }
         token = strtok(NULL, " ");
         activities[activity_count].tag_count += 1;
@@ -187,7 +244,7 @@ void list_activities() {
 }
 
 void summarize_activities() {
-    printf("\033[0;36mSummarizing today's activities...\033[0m\n");
+    /*printf("\033[0;36mSummarizing today's activities...\033[0m\n");
     list_activities();
     int x;
     for (x = 0; x < all_tag_count; x++) {
@@ -199,11 +256,63 @@ void summarize_activities() {
             printf("\033[1;33m[%s]x%d] ", tags_base[x].name, tags_base[x].instances);
         }
     }
-    printf("\033[0m\n");
+    printf("\033[0m\n");*/
+
+    // Reset todays_tags
+    int h;
+    for (h = 0; h < all_todays_tags; h++){
+        strcpy(todays_tags[h].name,"\0");
+        todays_tags[h].instances = 0;
+        todays_tags[h].duration = 0;
+    }
+    all_todays_tags = 0;
+
+
+    // List all the activities done today
+    printf("\033[0;36mSummarizing today's activities...\033[0m\n");
+    printf("\033[0;36mActivities:\033[0m\n");
+    int x;
+    int y;
+    int z;
+    int isUnique;
+    for (x = 0; x < all_today_done; x++) {
+        // Write the activity's name and its duration
+        printf("\033[1;32m%s: \033[1;34m%d minutes\033[0m\n", activities[today_done_act[x].id-1].name, today_done_act[x].duration);
+        // Add the activity's tags to todays_tags
+        for (y = 0; y < activities[today_done_act[x].id-1].tag_count; y++) {
+            isUnique = 1;
+            for (z = 0; z < all_todays_tags; z++) {
+                if (strncmp(activities[today_done_act[x].id-1].tags[y], todays_tags[z].name, (size_t)11) == 0) {
+                    if (debug == 1) {printf("[DEBUG] Compared %s with %s and think they are the same.\n", activities[today_done_act[x].id-1].tags[y], todays_tags[z].name);}
+                    todays_tags[z].instances += 1;
+                    if (debug == 1) {printf("[DEBUG] Added one instance to %s\n", todays_tags[z].name);}
+                    todays_tags[z].duration += today_done_act[x].duration;
+                    isUnique = 0;
+                } else {
+                    if (debug == 1) {printf("[DEBUG] Compared %s with %s and think they are NOT the same.\n", activities[today_done_act[x].id-1].tags[y], todays_tags[z].name);}
+                    //strcpy(dest, source);
+                }
+            }
+            if (isUnique == 1) {
+                if (debug == 1) {printf("[DEBUG] I think the tag %s is unique, adding it to todays_tags\n", activities[today_done_act[x].id-1].tags[y]);}
+                strcpy(todays_tags[all_todays_tags].name, activities[today_done_act[x].id-1].tags[y]);
+                todays_tags[all_todays_tags].instances ++;
+                todays_tags[all_todays_tags].duration += today_done_act[x].duration;
+                all_todays_tags ++;
+            }
+        }
+    }
+
+    // List all today's tags with their durations and instances
+    int i;
+    printf("\033[0;36mTags:\033[0m\n");
+    for (i = 0; i < all_todays_tags; i++) {
+        printf("\033[1;31m[%s] \033[0;36min %d instances \033[0;34mfor %d minutes\033[0m\n", todays_tags[i].name, todays_tags[i].instances, todays_tags[i].duration);
+    }
 
 }
 
-void generate_taglist() {
+/*void generate_taglist() {
     printf("Generating the taglist ///deprecated///");
     int i;
     for (i = 0; i < activity_count; i++) {
@@ -212,19 +321,19 @@ void generate_taglist() {
             printf("%d\n",compare_with_base(activities[i].tags[x]));
         }
     }
-}
+}*/
 
 int compare_with_base(char tag[10]) {
-    printf("[DEBUG] Comparing %s...\n", tag);
+    if (debug == 1) {printf("[DEBUG] Comparing %s...\n", tag);}
 
     int i;
     for (i = 0; i < all_tag_count; i++) {
         if (strncmp(tag, tags_base[i].name, (size_t)10) == 0) {
-            printf("[DEBUG] Compared %s with %s and think they are the same.\n", tag, tags_base[i].name);
+            if (debug == 1) {printf("[DEBUG] Compared %s with %s and think they are the same.\n", tag, tags_base[i].name);}
             tags_base[i].instances += 1;
             return 0;
         }
-        printf("[DEBUG] Compared %s with %s and think they are NOT the same.\n", tag, tags_base[i].name);
+        if (debug == 1) {printf("[DEBUG] Compared %s with %s and think they are NOT the same.\n", tag, tags_base[i].name);}
     }
 
     if (all_tag_count == 0) {
@@ -235,7 +344,7 @@ int compare_with_base(char tag[10]) {
 }
 
 void save_to_file() {
-    printf("[DEBUG] Saving to file...\n");
+    if (debug == 1) {printf("[DEBUG] Saving to file...\n");}
     FILE *fptr;
     fptr = fopen("habits.hbts", "w");
 
@@ -243,7 +352,7 @@ void save_to_file() {
         printf("Error opening file!\n");
     }
 
-    fprintf(fptr, "# Habits save file made with version 0.6\n");
+    fprintf(fptr, "# Habits save file made with version higher than 0.6\n");
     fprintf(fptr, "# Feel free to change it directly here\n");
     fprintf(fptr, "# Make sure not to disturb the structure though :D\n");
     fprintf(fptr, "\n");
@@ -252,7 +361,7 @@ void save_to_file() {
     for (i = 0; i < activity_count; i++) {
         fprintf(fptr, "%s\n%s %s %s %s %s\n", activities[i].name, activities[i].tags[0], activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4]);
 
-        printf("[DEBUG] Printing %s %s %s %s %s %s to the file...\n", activities[i].name, activities[i].tags[0], activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4]);
+        if (debug == 1) {printf("[DEBUG] Printing %s %s %s %s %s %s to the file...\n", activities[i].name, activities[i].tags[0], activities[i].tags[1], activities[i].tags[2], activities[i].tags[3], activities[i].tags[4]);}
 
         fprintf(fptr, "\n");
     }
@@ -262,7 +371,7 @@ void save_to_file() {
 }
 
 void read_from_file(){
-    printf("[DEBUG] Attempting to read from file...\n");
+    if (debug == 1) {printf("[DEBUG] Attempting to read from file...\n");}
     FILE *fptr;
     fptr = fopen("habits.hbts", "r");
     char readLine[100];
@@ -270,24 +379,24 @@ void read_from_file(){
     int x = 0;
 
     while (fgets(readLine, 100, fptr)) {
-        printf("[DEBUG] Now reading line #%d\n", i);
+        if (debug == 1) {printf("[DEBUG] Now reading line #%d\n", i);}
         char readName[21];
         char readTags[55];
 
         if (i > 3) {
             if (x == 0) {
-                printf("[DEBUG] Line %d is probably an activity name.\n", i);
+                if (debug == 1) {printf("[DEBUG] Line %d is probably an activity name.\n", i);}
                 readLine[strcspn(readLine, "\n\r")] = 0;
                 strcpy(readName, readLine);
-                printf("[DEBUG] readName is now %s.\n", readName);
+                if (debug == 1) {printf("[DEBUG] readName is now %s.\n", readName);}
                 x = 1;
             } else if (x == 1){
-                printf("[DEBUG] Line %d is probably a string of tags.\n", i);
+                if (debug == 1) {printf("[DEBUG] Line %d is probably a string of tags.\n", i);}
                 readLine[strcspn(readLine, "\n\r")] = 0;
                 strcpy(readTags, readLine);
                 x = 2;
             } else if (x == 2){
-                printf("[DEBUG] Line %d is probably a spacer.\n", i);
+                if (debug == 1) {printf("[DEBUG] Line %d is probably a spacer.\n", i);}
                 add_activity(readName, readTags);
                 x = 0;
             }
@@ -308,19 +417,34 @@ void delete_activity(int id){
     char answer;
     int c;
     printf("\033[31mDeleting the activity %s...\033[0m\n", activities[x].name);
+    printf("\033[31mIf you save after deletion, all data about this activity will be deleted.\033[0m\n");
     printf("Please confirm (y/n): ");
     answer = getchar();
     while ((c = getchar()) != '\n' && c != EOF);
 
     if (answer == 'y' || answer == 'Y') {
-        printf("[DEBUG] Proceeding with deletion...\n");
+        if (debug == 1) {printf("[DEBUG] Proceeding with deletion...\n");}
+
+        // Find out if the activity was done today
+        int k;
+        for (k = 0; k < all_today_done; k++){
+            if (today_done_act[k].id == id){
+                int l;
+                for (l = k; l < all_today_done - 1; l++){
+                    today_done_act[l].id = today_done_act[l+1].id;
+                    today_done_act[l].duration = today_done_act[l+1].duration;
+                }
+                all_today_done = all_today_done - 1;
+            }
+        }
+
         for (int i = x; i < activity_count - 1; i++) {
-            printf("[DEBUG] Copying %s to %s...\n",activities[i+1].name, activities[i].name);
+            if (debug == 1) {printf("[DEBUG] Copying %s to %s...\n",activities[i+1].name, activities[i].name);}
             activities[i] = activities[i + 1];
         }
         activity_count--;
         printf("\033[0;32mActivity removed.\033[0m\n");
-        printf("Please save and restart the program for summarize function to work, sorry for inconvenience...\n");
+        //printf("Please save and restart the program for summarize function to work, sorry for inconvenience...\n");
 /*        printf("[DEBUG] Resetting the activity properties...\n");
         activities[x].name[0] = '\0';
         for (int i = 0; i < 5; i++) {
@@ -368,12 +492,12 @@ void edit_activity(int id){
     }
 
     printf("\033[0m");
-    printf("[DEBUG] Trying to edit activity %s\n", activities[x].name);
-    printf("[DEBUG] New properties: %s with tags %s\n", newName, newTags);
-    printf("[DEBUG] Recreating the entry...\n");
+    if (debug == 1) {printf("[DEBUG] Trying to edit activity %s\n", activities[x].name);}
+    if (debug == 1) {printf("[DEBUG] New properties: %s with tags %s\n", newName, newTags);}
+    if (debug == 1) {printf("[DEBUG] Recreating the entry...\n");}
 
     strcpy(activities[x].name, newName);
-    printf("[DEBUG] Activity ID %d name: %s\n", x + 1, activities[x].name);
+    if (debug == 1) {printf("[DEBUG] Activity ID %d name: %s\n", x + 1, activities[x].name);}
 
     activities[x].tag_count = 0;
     int count = 0;
@@ -386,14 +510,33 @@ void edit_activity(int id){
         if (is_unique == 1) {
             strcpy(tags_base[all_tag_count].name, token);
             tags_base[all_tag_count].instances = 1;
-            printf("[DEBUG] Added a new tag named %s.\n", tags_base[all_tag_count].name);
+            if (debug == 1) {printf("[DEBUG] Added a new tag named %s.\n", tags_base[all_tag_count].name);}
             all_tag_count +=1;
         } else if (is_unique == 0) {
-            printf("[DEBUG] %s is not unique.\n", token);
+            if (debug == 1) {printf("[DEBUG] %s is not unique.\n", token);}
         }
         token = strtok(NULL, " ");
         activities[x].tag_count += 1;
     }
     printf("\033[0;32mThe activity \033[1;32m<%s>\033[0;32m was added.\033[0m\n", activities[x].name);
-    printf("Please save and restart the program for summarize function to work, sorry for inconvenience...\n");
+    //printf("Please save and restart the program for summarize function to work, sorry for inconvenience...\n");
+}
+
+void today_done(int id, int duration){
+    if (debug == 1) {printf("[DEBUG] Trying to add activity id %d with duration of %d...\n", id, duration);}
+    int x;
+    for (x = 0; x < all_today_done; x++) {
+        if (today_done_act[x].id == id){
+            today_done_act[x].duration = today_done_act[x].duration + duration;
+            if (debug == 1) {printf("[DEBUG] As the activity was already done today, its duration was increased by %d minutes.\n", duration);}
+            printf("\033[0;32mActivity %s is now done for %d minutes.\033[0\n", activities[id-1].name, today_done_act[x].duration);
+            return;
+        }
+    }
+
+    today_done_act[all_today_done].id = id;
+    today_done_act[all_today_done].duration = duration;
+    all_today_done ++;
+    if (debug == 1) {printf("[DEBUG] Added %d minutes to activity %s.\n", duration, activities[id-1].name);}
+    printf("\033[0;32mActivity %s is now done for %d minutes.\033[0\n", activities[id-1].name, today_done_act[x].duration);
 }
