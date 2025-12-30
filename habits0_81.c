@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define MAX_ACTIVITIES 100
 #define MAX_TAGS 500
@@ -11,6 +12,7 @@ typedef struct {
     char name[21];
     char tags[5][11];
     int tag_count;
+    int times[7];
 } activity;
 
 typedef struct {
@@ -49,9 +51,13 @@ static done today_done_act[MAX_ACTIVITIES];
 static int all_today_done;
 static today_tag todays_tags[MAX_TAGS];
 static int all_todays_tags;
+static time_t readTime;
 
 int main() {
-    printf("\033[1;34mWelcome to the habits version 0.8!\033[0m\n");
+    time_t currentTime = time(NULL);
+
+    printf("\033[1;34mWelcome to the habits version 0.81!\033[0m\n");
+    if (debug == 0) {printf("[DEBUG] Current timestamp is: %d\n", currentTime);}
     if (debug == 1) {printf("[DEBUG] Attempting to find save file...\n");}
     FILE *rptr;
     rptr = fopen("habits.hbts", "r");
@@ -62,6 +68,9 @@ int main() {
         printf("\033[32mFound the save file, loading...\033[0m\n");
         read_from_file();
     }
+
+    int timeDifference = currentTime - readTime;
+    if (debug == 0) {printf("[DEBUG] The time difference is: %d\n", timeDifference);}
 
     while(true) {
 
@@ -159,7 +168,7 @@ int main() {
             list_activities();
             printf("\033[0;36mEnter activity ID to edit: \033[0m");
             if (fgets(buffer, sizeof(buffer), stdin)) {
-                tags[strcspn(buffer, "\n")] = '\0';
+                buffer[strcspn(buffer, "\n")] = '\0';
                 if (sscanf(buffer, "%d", &id) == 1){
                     edit_activity(id);
                 } else {
@@ -352,9 +361,14 @@ void save_to_file() {
         printf("Error opening file!\n");
     }
 
-    fprintf(fptr, "# Habits save file made with version higher than 0.6\n");
+    time_t saveTime = time(NULL);
+
+    fprintf(fptr, "# Habits save file made with version higher than 0.81\n");
     fprintf(fptr, "# Feel free to change it directly here\n");
     fprintf(fptr, "# Make sure not to disturb the structure though :D\n");
+    fprintf(fptr, "\n");
+    fprintf(fptr, "TIMESTAMP\n");
+    fprintf(fptr, "%d\n", saveTime);
     fprintf(fptr, "\n");
 
     int i;
@@ -377,13 +391,23 @@ void read_from_file(){
     char readLine[100];
     int i = 0;
     int x = 0;
+    time_t timestamp = 0;
 
     while (fgets(readLine, 100, fptr)) {
         if (debug == 1) {printf("[DEBUG] Now reading line #%d\n", i);}
         char readName[21];
         char readTags[55];
 
-        if (i > 3) {
+        if (i==5) {
+            if (debug == 1) {printf("[DEBUG] Line %d is probably the timestamp.\n", i);}
+            readLine[strcspn(readLine, "\n\r")] = 0;
+            sscanf(readLine, "%ld", &timestamp);
+            readTime = timestamp;
+            if (debug == 0) {printf("[DEBUG] The readTime is: %ld\n", (long)readTime);}
+        }
+        //(sscanf(buffer, "%d", &id)
+
+        if (i > 6) {
             if (x == 0) {
                 if (debug == 1) {printf("[DEBUG] Line %d is probably an activity name.\n", i);}
                 readLine[strcspn(readLine, "\n\r")] = 0;
