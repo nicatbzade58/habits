@@ -42,6 +42,7 @@ void read_from_file();
 void delete_activity(int id);
 void edit_activity(int id);
 void today_done(int id, int duration);
+void manage_times(time_t timestamp, char line[100]);
 
 static activity activities[MAX_ACTIVITIES];
 static int activity_count = 0;
@@ -52,12 +53,13 @@ static int all_today_done;
 static today_tag todays_tags[MAX_TAGS];
 static int all_todays_tags;
 static time_t readTime;
+static int timeDifference;
 
 int main() {
     time_t currentTime = time(NULL);
 
-    printf("\033[1;34mWelcome to the habits version 0.81!\033[0m\n");
-    if (debug == 0) {printf("[DEBUG] Current timestamp is: %d\n", currentTime);}
+    printf("\033[1;34mWelcome to the habits version 0.82!\033[0m\n");
+    if (debug == 1) {printf("[DEBUG] Current timestamp is: %d\n", currentTime);}
     if (debug == 1) {printf("[DEBUG] Attempting to find save file...\n");}
     FILE *rptr;
     rptr = fopen("habits.hbts", "r");
@@ -69,8 +71,30 @@ int main() {
         read_from_file();
     }
 
-    int timeDifference = currentTime - readTime;
-    if (debug == 0) {printf("[DEBUG] The time difference is: %d\n", timeDifference);}
+    timeDifference = currentTime - readTime;
+    if (debug == 1) {printf("[DEBUG] The time difference is: %d\n", timeDifference);}
+
+    time_t today = time(NULL);
+    struct tm td = *localtime(&today);
+    td.tm_hour = 0;
+    td.tm_min = 0;
+    td.tm_sec = 0;
+    td.tm_isdst = -1;
+    time_t today_midnight = mktime(&td);
+    if (debug == 1) {printf("[DEBUG] Today's midnight's timestamp: %ld\n", today_midnight);}
+
+    struct tm rt = *localtime(&readTime);
+    rt.tm_hour = 0;
+    rt.tm_min = 0;
+    rt.tm_sec = 0;
+    rt.tm_isdst = -1;
+    time_t read_midnight = mktime(&rt);
+    if (debug == 1) {printf("[DEBUG] Read Timestamp's midnight's timestamp: %ld\n", read_midnight);}
+
+    double seconds = difftime(today_midnight, read_midnight);
+    int days = (int)(seconds / 86400);
+
+    if (debug == 1) {printf("[DEBUG] The day difference is: %d\n", days);}
 
     while(true) {
 
@@ -403,7 +427,7 @@ void read_from_file(){
             readLine[strcspn(readLine, "\n\r")] = 0;
             sscanf(readLine, "%ld", &timestamp);
             readTime = timestamp;
-            if (debug == 0) {printf("[DEBUG] The readTime is: %ld\n", (long)readTime);}
+            if (debug == 1) {printf("[DEBUG] The readTime is: %ld\n", (long)readTime);}
         }
         //(sscanf(buffer, "%d", &id)
 
@@ -420,7 +444,12 @@ void read_from_file(){
                 strcpy(readTags, readLine);
                 x = 2;
             } else if (x == 2){
-                if (debug == 1) {printf("[DEBUG] Line %d is probably a spacer.\n", i);}
+                if (debug == 1) {printf("[DEBUG] Line %d is probably a string of timestamps.\n", i);}
+                readLine[strcspn(readLine, "\n\r")] = 0;
+                if (timeDifference < 604800){
+                    if (debug == 1) {printf("[DEBUG] timeDifference is smaller than 604800, managing times.\n", i);}
+                    manage_times(readTime, readLine);
+                }
                 add_activity(readName, readTags);
                 x = 0;
             }
@@ -563,4 +592,57 @@ void today_done(int id, int duration){
     all_today_done ++;
     if (debug == 1) {printf("[DEBUG] Added %d minutes to activity %s.\n", duration, activities[id-1].name);}
     printf("\033[0;32mActivity %s is now done for %d minutes.\033[0\n", activities[id-1].name, today_done_act[x].duration);
+}
+
+void manage_times(time_t timestamp, char line[121]){
+
+    if (debug == 1) {printf("[DEBUG] Timestamp %ld and line %s received.\n", timestamp, line);}
+
+    /*time_t today = time(NULL);
+    struct tm td = *localtime(&today);
+    td.tm_hour = 0;
+    td.tm_min = 0;
+    td.tm_sec = 0;
+    td.tm_isdst = -1;
+    time_t today_midnight = mktime(&td);
+    printf("Today's midnight's timestamp: %ld\n", today_midnight);
+
+    struct tm rt = *localtime(&readTime);
+    rt.tm_hour = 0;
+    rt.tm_min = 0;
+    rt.tm_sec = 0;
+    rt.tm_isdst = -1;
+    time_t read_midnight = mktime(&rt);
+    printf("Read Timestamp's midnight's timestamp: %ld\n", read_midnight);
+
+    double seconds = difftime(today_midnight, read_midnight);
+    int days = (int)(seconds / 86400);
+
+    printf("The day difference is: %d\n", days);*/
+
+    /*struct tm *t = localtime(&readTime);
+    printf("The readTime points to day %d\n", t->tm_mday);
+    int dayDifference = 0;
+    long nextDay = readTime;
+
+    time_t now = time(NULL);         // Get current time
+    struct tm *g = localtime(&now);  // Convert to local time structure
+    printf("Today points to day: %d\n", g->tm_mday);
+
+    for (int i = 0; i < 8; i++){
+        nextDay = readTime + i * 86400;
+        struct tm *f = localtime(&nextDay);
+        printf("One day later points to day %d\n", f->tm_mday);
+        if (f->tm_mday == g->tm_mday){
+            printf("The day difference should be: %d\n", dayDifference);
+            printf("I think %d and %d are the same.\n", f->tm_mday, g->tm_mday);
+        } else {
+            dayDifference += 1;
+        }
+    }*/
+
+    /*long nextDay = readTime + 86400;
+    struct tm *f = localtime(&nextDay);
+    printf("One day later points to day %d\n", f->tm_mday);*/
+
 }
